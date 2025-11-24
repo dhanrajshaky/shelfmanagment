@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Library Shelf</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="app-body">
+
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo">📚</div>
+        <div>
+          <h1>Library Shelf Management</h1>
+          <div class="subtitle">Manage shelves and books — keep your collection organized</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <aside class="sidebar panel">
+        <div class="card-compact">
+          <h3>Quick Actions</h3>
+          <p class="small">Use these forms to add shelves or books quickly.</p>
+          <div class="compact-forms">
+            <form id="shelfForm" class="mini-form">
+              <input type="hidden" id="shelfId" />
+              <input id="shelfName" placeholder="Shelf name" required />
+              <input id="shelfLocation" placeholder="Location" />
+              <input id="shelfCapacity" type="number" min="1" value="50" />
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button type="submit" class="btn">Save Shelf</button>
+                <button type="button" id="resetShelfBtn" class="btn ghost">Reset</button>
+              </div>
+            </form>
+
+            <hr style="margin:12px 0"/>
+
+            <form id="bookForm" class="mini-form">
+              <input type="hidden" id="bookId" />
+              <input id="bookTitle" placeholder="Title" required />
+              <input id="bookAuthor" placeholder="Author" />
+              <input id="bookIsbn" placeholder="ISBN" />
+              <select id="bookShelf">
+                <option value="">-- No shelf --</option>
+              </select>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button type="submit" class="btn">Save Book</button>
+                <button type="button" id="resetBookBtn" class="btn ghost">Reset</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </aside>
+
+      <section class="content panel wide">
+        <div class="toolbar" style="justify-content:space-between;align-items:center">
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="searchInput" placeholder="Search books..." />
+            <button id="searchBtn" class="btn ghost">Search</button>
+            <button id="refreshBtn" class="btn muted">Refresh</button>
+          </div>
+          <div class="small muted">Tip: Click a shelf 'Open' to view details</div>
+        </div>
+
+        <div id="shelvesContainer" class="grid shelves-grid"></div>
+      </section>
+    </main>
+
+    <!-- modal -->
+    <div id="modal" class="modal hidden" role="dialog" aria-hidden="true">
+      <div class="modal-content">
+        <button class="modal-close" id="modalCloseBtn">✕</button>
+        <div id="modalBody"></div>
+      </div>
+    </div>
+
+    <footer class="app-footer small muted">Library Shelf — quiet study mode • Contact: library@example.org</footer>
+
+    <script src="app.js"></script>
+    <script>
+      // focus helpers
+      document.addEventListener('DOMContentLoaded', ()=>{
+        const ob = document.getElementById('openBookForm');
+        const os = document.getElementById('openShelfForm');
+        if (ob) ob.addEventListener('click', (e)=>{ e.preventDefault(); document.getElementById('bookTitle').focus(); window.scrollTo({top:0,behavior:'smooth'}); });
+        if (os) os.addEventListener('click', (e)=>{ e.preventDefault(); document.getElementById('shelfName').focus(); window.scrollTo({top:0,behavior:'smooth'}); });
+      });
+    </script>
+  </body>
+</html>

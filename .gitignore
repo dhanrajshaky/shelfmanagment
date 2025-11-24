@@ -1,0 +1,36 @@
+# Maven / Java
+/.mvn/
+/target/
+
+# IDEs
+/.idea/
+*.iml
+*.ipr
+*.iws
+/.classpath
+/.project
+/.settings/
+
+# VS Code
+.vscode/
+
+# Logs and temp
+*.log
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db
+
+# Maven generated
+dependency-reduced-pom.xml
+buildNumber.properties
+
+# Spring Boot devtools
+spring-devtools.properties
+
+# Environment files
+.env
+
+# OS files
+ehthumbs.db
+

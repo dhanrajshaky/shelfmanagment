@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Welcome — Library Shelf</title>
+    <style>
+      :root{ --overlay: rgba(6,10,20,0.45); --card:#ffffffcc; --accent:#2563eb; --muted:#eef2ff }
+      *{box-sizing:border-box}
+      html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;color:#fff}
+      body{background-image: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=2000&q=80'); background-size:cover; background-position:center;}
+      .overlay{position:fixed;inset:0;background:var(--overlay);display:flex;align-items:center;justify-content:center;padding:24px}
+      .welcome{max-width:1000px;width:100%;display:grid;grid-template-columns:1fr 420px;gap:24px;align-items:center}
+      .hero{padding:32px;background:transparent}
+      h1{font-size:40px;margin:0 0 12px}
+      p.lead{margin:0 0 18px;color:#e8eefc;font-size:16px}
+      .card{background:var(--card);color:#061025;padding:18px;border-radius:12px;box-shadow:0 8px 24px rgba(4,6,20,0.35)}
+      .card h3{margin-top:0}
+      .rules{margin:0;padding-left:18px}
+      .actions{display:flex;gap:12px;margin-top:16px}
+      .btn{display:inline-block;padding:10px 14px;border-radius:10px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600}
+      .btn.secondary{background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.18)}
+      @media(max-width:900px){ .welcome{grid-template-columns:1fr; } .hero{order:2} }
+    </style>
+  </head>
+  <body>
+    <div class="overlay">
+      <div class="welcome">
+        <div class="hero">
+          <h1>Welcome to the Library Shelf</h1>
+          <p class="lead">Manage shelves and books easily. Browse available collections, add books, and keep track of shelf occupancy.</p>
+          <div class="actions">
+            <a class="btn" href="/app.html">Enter App</a>
+            <a class="btn secondary" href="#rules">Library Rules</a>
+          </div>
+        </div>
+        <div class="card" id="rules">
+          <h3>Library Rules & Info</h3>
+          <ul class="rules">
+            <li>Be respectful — maintain silence in reading areas.</li>
+            <li>Return borrowed books by the due date.</li>
+            <li>Keep books on their assigned shelves.</li>
+            <li>Food and drinks are not allowed near books.</li>
+            <li>Report damaged books to the librarian.</li>
+          </ul>
+          <p style="margin-top:12px;color:#33425a;font-size:13px">Contact: <strong>library@example.org</strong> • Hours: Mon–Fri 09:00–18:00</p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
