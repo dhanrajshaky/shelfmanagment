@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: library-shelf
+    env: docker
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: MYSQL_HOST
+        value: <your-mysql-host>
+      - key: MYSQL_PORT
+        value: 3306
+      - key: MYSQL_DB
+        value: <your-db-name>
+      - key: MYSQL_USER
+        value: <your-db-user>
+      - key: MYSQL_PASSWORD
+        value: <your-db-password>
+    healthCheckPath: /
+    dockerfilePath: ./Dockerfile
+    buildCommand: ""
+    startCommand: ""
