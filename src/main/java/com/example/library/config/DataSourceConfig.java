@@ -28,20 +28,24 @@ public class DataSourceConfig {
         String pass = env.getProperty("MYSQL_PASSWORD", "");
         String params = "?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
 
-        String jdbcNoDb = String.format("jdbc:mysql://%s:%s/%s", host, port, "");
-        // Some drivers require a trailing slash for the no-db URL
-        if (!jdbcNoDb.endsWith("/")) jdbcNoDb = jdbcNoDb + "/";
-        jdbcNoDb += params;
+        boolean isPlanetScale = host.contains("tidbcloud.com") || host.contains("planetscale.com");
 
-        // Attempt to create database if missing. This requires the user to have
-        // privileges to create databases on the server.
-        try (Connection c = DriverManager.getConnection(jdbcNoDb, user, pass);
-             Statement s = c.createStatement()) {
-            String sql = String.format("CREATE DATABASE IF NOT EXISTS `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci", db);
-            s.executeUpdate(sql);
-        } catch (SQLException e) {
-            // If creation failed, rethrow with context — app may still start if DB exists
-            throw new SQLException("Unable to create or access database '" + db + "' using provided credentials", e);
+        if (!isPlanetScale) {
+            String jdbcNoDb = String.format("jdbc:mysql://%s:%s/%s", host, port, "");
+            // Some drivers require a trailing slash for the no-db URL
+            if (!jdbcNoDb.endsWith("/")) jdbcNoDb = jdbcNoDb + "/";
+            jdbcNoDb += params;
+
+            // Attempt to create database if missing. This requires the user to have
+            // privileges to create databases on the server.
+            try (Connection c = DriverManager.getConnection(jdbcNoDb, user, pass);
+                 Statement s = c.createStatement()) {
+                String sql = String.format("CREATE DATABASE IF NOT EXISTS `%s` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci", db);
+                s.executeUpdate(sql);
+            } catch (SQLException e) {
+                // If creation failed, rethrow with context — app may still start if DB exists
+                throw new SQLException("Unable to create or access database '" + db + "' using provided credentials", e);
+            }
         }
 
         String jdbc = String.format("jdbc:mysql://%s:%s/%s%s", host, port, db, params);
