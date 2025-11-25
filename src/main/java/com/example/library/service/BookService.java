@@ -4,6 +4,7 @@ import com.example.library.model.Book;
 import com.example.library.model.Shelf;
 import com.example.library.repository.BookRepository;
 import com.example.library.repository.ShelfRepository;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
@@ -18,14 +19,17 @@ public class BookService {
     }
 
     public List<Book> all() { return bookRepo.findAll(); }
-    public Book get(Long id) { return bookRepo.findById(id).orElseThrow(() -> new RuntimeException("Book not found")); }
+    public Book get(@NonNull Long id) { return bookRepo.findById(id).orElseThrow(() -> new RuntimeException("Book not found")); }
 
     public Book create(Book b) {
         if (b.getShelf() != null) {
-            Shelf s = shelfRepo.findById(b.getShelf().getId()).orElseThrow(() -> new RuntimeException("Shelf not found"));
-            long current = bookRepo.countByShelfId(s.getId());
-            if (current >= s.getCapacity()) throw new RuntimeException("Shelf is full");
-            b.setShelf(s);
+            Long shelfId = b.getShelf().getId();
+            if (shelfId != null) {
+                Shelf s = shelfRepo.findById(shelfId).orElseThrow(() -> new RuntimeException("Shelf not found"));
+                long current = bookRepo.countByShelfId(s.getId());
+                if (current >= s.getCapacity()) throw new RuntimeException("Shelf is full");
+                b.setShelf(s);
+            }
         }
         Book saved = bookRepo.save(b);
         // maintain bidirectional relationship in memory / DB
@@ -39,38 +43,41 @@ public class BookService {
         return saved;
     }
 
-    public Book update(Long id, Book updated) {
+    public Book update(@NonNull Long id, Book updated) {
         Book ex = bookRepo.findById(id).orElseThrow(() -> new RuntimeException("Book not found"));
         ex.setTitle(updated.getTitle());
         ex.setAuthor(updated.getAuthor());
         ex.setIsbn(updated.getIsbn());
         if (updated.getShelf() != null) {
-            Shelf s = shelfRepo.findById(updated.getShelf().getId()).orElseThrow(() -> new RuntimeException("Shelf not found"));
-            long current = bookRepo.countByShelfId(s.getId());
-            if (!s.getId().equals(ex.getShelf() == null ? null : ex.getShelf().getId()) && current >= s.getCapacity())
-                throw new RuntimeException("Shelf is full");
-            // remove from old shelf list if present
-            Shelf old = ex.getShelf();
-            ex.setShelf(s);
-            Book saved = bookRepo.save(ex);
-            if (old != null && old.getBooks().contains(saved)) {
-                old.getBooks().removeIf(b -> b.getId().equals(saved.getId()));
-                shelfRepo.save(old);
+            Long shelfId = updated.getShelf().getId();
+            if (shelfId != null) {
+                Shelf s = shelfRepo.findById(shelfId).orElseThrow(() -> new RuntimeException("Shelf not found"));
+                long current = bookRepo.countByShelfId(s.getId());
+                if (!s.getId().equals(ex.getShelf() == null ? null : ex.getShelf().getId()) && current >= s.getCapacity())
+                    throw new RuntimeException("Shelf is full");
+                // remove from old shelf list if present
+                Shelf old = ex.getShelf();
+                ex.setShelf(s);
+                Book saved = bookRepo.save(ex);
+                if (old != null && old.getBooks().contains(saved)) {
+                    old.getBooks().removeIf(b -> b.getId().equals(saved.getId()));
+                    shelfRepo.save(old);
+                }
+                if (!s.getBooks().contains(saved)) {
+                    s.getBooks().add(saved);
+                    shelfRepo.save(s);
+                }
+                return saved;
             }
-            if (!s.getBooks().contains(saved)) {
-                s.getBooks().add(saved);
-                shelfRepo.save(s);
-            }
-            return saved;
         } else {
             ex.setShelf(null);
         }
         return bookRepo.save(ex);
     }
 
-    public void delete(Long id) { bookRepo.deleteById(id); }
+    public void delete(@NonNull Long id) { bookRepo.deleteById(id); }
 
-    public Book move(Long bookId, Long shelfId) {
+    public Book move(@NonNull Long bookId, @NonNull Long shelfId) {
         Book b = bookRepo.findById(bookId).orElseThrow(() -> new RuntimeException("Book not found"));
         Shelf s = shelfRepo.findById(shelfId).orElseThrow(() -> new RuntimeException("Shelf not found"));
         long current = bookRepo.countByShelfId(s.getId());

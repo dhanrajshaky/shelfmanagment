@@ -5,6 +5,7 @@ import com.example.library.model.Shelf;
 import com.example.library.service.BookService;
 import com.example.library.service.ShelfService;
 import com.example.library.dto.BookRequest;
+import org.springframework.lang.NonNull;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -34,7 +35,7 @@ public class BookController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Book> get(@PathVariable Long id) {
+    public ResponseEntity<Book> get(@PathVariable @NonNull Long id) {
         try { return ResponseEntity.ok(bookService.get(id)); }
         catch(Exception ex) { return ResponseEntity.notFound().build(); }
     }
@@ -47,36 +48,42 @@ public class BookController {
             b.setAuthor(req.getAuthor());
             b.setIsbn(req.getIsbn());
             if (req.getShelfId() != null) {
-                Shelf s = shelfService.get(req.getShelfId()).orElseThrow(() -> new RuntimeException("Shelf not found"));
-                b.setShelf(s);
+                Long shelfId = req.getShelfId();
+                if (shelfId != null) {
+                    Shelf s = shelfService.get(shelfId).orElseThrow(() -> new RuntimeException("Shelf not found"));
+                    b.setShelf(s);
+                }
             }
             return ResponseEntity.ok(bookService.create(b));
         } catch(Exception ex) { return ResponseEntity.badRequest().body(ex.getMessage()); }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody BookRequest req) {
+    public ResponseEntity<?> update(@PathVariable @NonNull Long id, @RequestBody BookRequest req) {
         try {
             Book b = new Book();
             b.setTitle(req.getTitle());
             b.setAuthor(req.getAuthor());
             b.setIsbn(req.getIsbn());
             if (req.getShelfId() != null) {
-                Shelf s = shelfService.get(req.getShelfId()).orElseThrow(() -> new RuntimeException("Shelf not found"));
-                b.setShelf(s);
+                Long shelfId = req.getShelfId();
+                if (shelfId != null) {
+                    Shelf s = shelfService.get(shelfId).orElseThrow(() -> new RuntimeException("Shelf not found"));
+                    b.setShelf(s);
+                }
             }
             return ResponseEntity.ok(bookService.update(id, b));
         } catch(Exception ex) { return ResponseEntity.badRequest().body(ex.getMessage()); }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable @NonNull Long id) {
         bookService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/move")
-    public ResponseEntity<?> move(@PathVariable Long id, @RequestParam Long shelfId) {
+    public ResponseEntity<?> move(@PathVariable @NonNull Long id, @RequestParam @NonNull Long shelfId) {
         try { return ResponseEntity.ok(bookService.move(id, shelfId)); }
         catch(Exception ex) { return ResponseEntity.badRequest().body(ex.getMessage()); }
     }
