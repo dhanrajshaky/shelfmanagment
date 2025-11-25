@@ -27,10 +27,12 @@ public class DataSourceConfig {
         String pass = env.getProperty("MYSQL_PASSWORD", "");
         
         boolean isPlanetScale = host.contains("tidbcloud.com") || host.contains("planetscale.com");
-        
-        // For PlanetScale/TiDB, use SSL by default
-        String params = isPlanetScale ? "?useSSL=true&serverTimezone=UTC&allowPublicKeyRetrieval=true" 
-                                      : "?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
+
+        // For PlanetScale/TiDB (cloud) require SSL and use recommended JDBC params
+        // sslMode=REQUIRED avoids common SSL handshake issues on cloud providers
+        String params = isPlanetScale
+            ? "?useSSL=true&sslMode=REQUIRED&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+            : "?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
 
         try {
             // Try to create database for local MySQL only (skip for cloud-hosted databases)
@@ -62,26 +64,20 @@ public class DataSourceConfig {
             cfg.setIdleTimeout(600000); // 10 minutes
             cfg.setMaxLifetime(1800000); // 30 minutes
             
-            // For PlanetScale/TiDB cloud databases
+            // For PlanetScale/TiDB cloud databases: make sure driver-level props are set
             if (isPlanetScale) {
                 cfg.addDataSourceProperty("serverTimezone", "UTC");
                 cfg.addDataSourceProperty("allowPublicKeyRetrieval", "true");
+                cfg.addDataSourceProperty("useSSL", "true");
+                cfg.addDataSourceProperty("sslMode", "REQUIRED");
             }
 
             return new HikariDataSource(cfg);
         } catch (Exception e) {
-            System.err.println("Error connecting to MySQL, falling back to H2 in-memory database");
-            System.err.println("Error details: " + e.getMessage());
-            
-            // Fallback to H2 in-memory database
-            HikariConfig cfg = new HikariConfig();
-            cfg.setJdbcUrl("jdbc:h2:mem:librarydb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE");
-            cfg.setUsername("root");
-            cfg.setPassword("");
-            cfg.setDriverClassName("org.h2.Driver");
-            cfg.setMaximumPoolSize(10);
-            
-            return new HikariDataSource(cfg);
+            String msg = "Failed to initialize MySQL DataSource for host=" + host + " db=" + db + ". Failing fast (no H2 fallback).";
+            System.err.println(msg);
+            e.printStackTrace(System.err);
+            throw new IllegalStateException(msg, e);
         }
     }
 }
