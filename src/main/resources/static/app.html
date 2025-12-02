@@ -1,92 +1,214 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Library Shelf</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body class="app-body">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Library Shelf — App</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
 
-    <header class="app-header">
-      <div class="brand">
-        <div class="logo">📚</div>
-        <div>
-          <h1>Library Shelf Management</h1>
-          <div class="subtitle">Manage shelves and books — keep your collection organized</div>
+<body class="app-body">
+
+<header class="app-header">
+  <div class="brand">
+    <div class="logo">📚</div>
+    <div>
+      <h1>Library Shelf Management</h1>
+      <div class="subtitle">Manage shelves · Add books · Track occupancy</div>
+    </div>
+  </div>
+
+  <nav class="top-nav">
+    <button id="navManage" class="nav-btn active">Manage</button>
+    <button id="navShelves" class="nav-btn">Shelves</button>
+    <button id="navAllShelves" class="nav-btn">All Shelves</button>
+  </nav>
+</header>
+
+<main class="app-main">
+  <!-- TOP FILTER -->
+  <div class="panel-top">
+    <div class="toolbar">
+      <select id="shelfFilterSelect">
+        <option value="">— Select shelf —</option>
+      </select>
+      <button id="applyShelfFilterBtn" class="btn ghost">Apply</button>
+      <div style="flex:1"></div>
+      <button id="viewAllShelvesBtn" class="btn muted">View All Shelves</button>
+    </div>
+  </div>
+
+  <!-- PAGE 1: MANAGE -->
+  <section id="page-manage" class="panel page-wrapper">
+    <div class="columns">
+      <div class="col">
+        <div class="card">
+          <h3>New Shelf</h3>
+          <p class="small muted">Create a shelf and set its capacity.</p>
+
+          <form id="shelfForm" class="mini-form">
+            <input type="hidden" id="shelfId" />
+
+            <label for="shelfName">Shelf Name</label>
+            <input id="shelfName" required />
+
+            <label for="shelfLocation">Location</label>
+            <input id="shelfLocation" />
+
+            <label for="shelfCapacity">Capacity</label>
+            <input id="shelfCapacity" type="number" min="1" value="50" />
+
+            <div class="actions">
+              <button type="submit" class="btn">Save Shelf</button>
+              <button type="button" id="resetShelfBtn" class="btn ghost">Reset</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h3>New Book</h3>
+          <p class="small muted">Add a book and optionally assign it to a shelf.</p>
+
+          <form id="bookForm" class="mini-form">
+            <input type="hidden" id="bookId" />
+
+            <label for="bookTitle">Title</label>
+            <input id="bookTitle" required />
+
+            <label for="bookAuthor">Author</label>
+            <input id="bookAuthor" />
+
+            <label for="bookIsbn">ISBN</label>
+            <input id="bookIsbn" />
+
+            <label for="bookShelf">Shelf</label>
+            <select id="bookShelf">
+              <option value="">-- No Shelf --</option>
+            </select>
+
+            <div class="actions">
+              <button type="submit" class="btn">Save Book</button>
+              <button type="button" id="resetBookBtn" class="btn ghost">Reset</button>
+            </div>
+          </form>
+        </div>
+
+        <div style="text-align:center;margin-top:14px">
+          <button id="gotoShelvesBtn" class="btn secondary">View All Shelves</button>
         </div>
       </div>
-    </header>
+    </div>
+  </section>
 
-    <main class="app-main">
-      <aside class="sidebar panel">
-        <div class="card-compact">
-          <h3>Quick Actions</h3>
-          <p class="small">Use these forms to add shelves or books quickly.</p>
-          <div class="compact-forms">
-            <form id="shelfForm" class="mini-form">
-              <input type="hidden" id="shelfId" />
-              <input id="shelfName" placeholder="Shelf name" required />
-              <input id="shelfLocation" placeholder="Location" />
-              <input id="shelfCapacity" type="number" min="1" value="50" />
-              <div style="display:flex;gap:8px;margin-top:8px">
-                <button type="submit" class="btn">Save Shelf</button>
-                <button type="button" id="resetShelfBtn" class="btn ghost">Reset</button>
-              </div>
-            </form>
+  <!-- PAGE 2: SHELVES -->
+  <section id="page-shelves" class="panel page-wrapper hidden">
+    <div class="toolbar">
+      <input id="searchInput" placeholder="Search books..." />
+      <button id="searchBtn" class="btn ghost">Search</button>
+      <button id="refreshBtn" class="btn muted">Refresh</button>
+      <button id="backToManageBtn" class="btn">Back</button>
+    </div>
 
-            <hr style="margin:12px 0"/>
+    <div id="shelvesContainer" class="grid shelves-grid"></div>
+  </section>
 
-            <form id="bookForm" class="mini-form">
-              <input type="hidden" id="bookId" />
-              <input id="bookTitle" placeholder="Title" required />
-              <input id="bookAuthor" placeholder="Author" />
-              <input id="bookIsbn" placeholder="ISBN" />
-              <select id="bookShelf">
-                <option value="">-- No shelf --</option>
-              </select>
-              <div style="display:flex;gap:8px;margin-top:8px">
-                <button type="submit" class="btn">Save Book</button>
-                <button type="button" id="resetBookBtn" class="btn ghost">Reset</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </aside>
-
-      <section class="content panel wide">
-        <div class="toolbar" style="justify-content:space-between;align-items:center">
-          <div style="display:flex;gap:8px;align-items:center">
-            <input id="searchInput" placeholder="Search books..." />
-            <button id="searchBtn" class="btn ghost">Search</button>
-            <button id="refreshBtn" class="btn muted">Refresh</button>
-          </div>
-          <div class="small muted">Tip: Click a shelf 'Open' to view details</div>
-        </div>
-
-        <div id="shelvesContainer" class="grid shelves-grid"></div>
-      </section>
-    </main>
-
-    <!-- modal -->
-    <div id="modal" class="modal hidden" role="dialog" aria-hidden="true">
-      <div class="modal-content">
-        <button class="modal-close" id="modalCloseBtn">✕</button>
-        <div id="modalBody"></div>
+  <!-- PAGE 3: ALL SHELVES -->
+  <section id="page-all-shelves" class="panel page-wrapper hidden">
+    <div class="panel-header" style="display:flex;justify-content:space-between;">
+      <div class="small muted">All Shelves (Compact View)</div>
+      <div>
+        <button id="backFromAllBtn" class="btn">Back</button>
+        <button id="refreshAllBtn" class="btn ghost">Refresh</button>
       </div>
     </div>
 
-    <footer class="app-footer small muted">Library Shelf — quiet study mode • Contact: library@example.org</footer>
+    <div id="allShelvesContainer" class="grid shelves-grid"></div>
+  </section>
+</main>
 
-    <script src="app.js"></script>
-    <script>
-      // focus helpers
-      document.addEventListener('DOMContentLoaded', ()=>{
-        const ob = document.getElementById('openBookForm');
-        const os = document.getElementById('openShelfForm');
-        if (ob) ob.addEventListener('click', (e)=>{ e.preventDefault(); document.getElementById('bookTitle').focus(); window.scrollTo({top:0,behavior:'smooth'}); });
-        if (os) os.addEventListener('click', (e)=>{ e.preventDefault(); document.getElementById('shelfName').focus(); window.scrollTo({top:0,behavior:'smooth'}); });
+<!-- MODAL -->
+<div id="modal" class="modal hidden">
+  <div class="modal-content">
+    <button id="modalCloseBtn" class="modal-close">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<footer class="app-footer small muted">Library Shelf — quiet study mode</footer>
+
+<script src="app.js"></script>
+
+<script>
+/* PAGE SWITCHING ONLY */
+const $ = id => document.getElementById(id);
+
+function showPage(id){
+  ["page-manage","page-shelves","page-all-shelves"].forEach(p=>{
+    $(p).classList.toggle("hidden", p !== id);
+  });
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  if(id==="page-manage") $("navManage").classList.add("active");
+  if(id==="page-shelves") $("navShelves").classList.add("active");
+  if(id==="page-all-shelves") $("navAllShelves").classList.add("active");
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  showPage("page-manage");
+
+  $("navManage").onclick = ()=>showPage("page-manage");
+  $("navShelves").onclick = ()=>showPage("page-shelves");
+  $("navAllShelves").onclick = ()=>showPage("page-all-shelves");
+
+  $("gotoShelvesBtn").onclick = ()=>showPage("page-shelves");
+  $("backToManageBtn").onclick = ()=>showPage("page-manage");
+  $("backFromAllBtn").onclick = ()=>showPage("page-manage");
+
+  $("applyShelfFilterBtn").onclick = ()=>{
+    const v = $("shelfFilterSelect").value;
+    window.dispatchEvent(new CustomEvent("ui:shelfSelected",{detail:{shelfId:v}}));
+    if(v) showPage("page-shelves");
+  };
+
+  window.populateShelfDropdown = shelves=>{
+    const sel1 = $("bookShelf");
+    const sel2 = $("shelfFilterSelect");
+    if(sel1){
+      sel1.innerHTML = `<option value="">-- No shelf --</option>`;
+      shelves.forEach(s=>{
+        const o=document.createElement("option");
+        o.value=s.id;
+        o.text=s.name+(s.location?` — ${s.location}`:"");
+        sel1.appendChild(o);
       });
-    </script>
-  </body>
+    }
+    if(sel2){
+      sel2.innerHTML = `<option value="">— Select shelf —</option>`;
+      shelves.forEach(s=>{
+        const o=document.createElement("option");
+        o.value=s.id;
+        o.text=s.name+(s.location?` — ${s.location}`:"");
+        sel2.appendChild(o);
+      });
+    }
+  };
+
+  window.renderAllShelves = shelves=>{
+    const out = $("allShelvesContainer");
+    out.innerHTML="";
+    shelves.forEach(s=>{
+      const el=document.createElement("div");
+      el.className="shelf-card card";
+      el.innerHTML=`
+        <div class="shelf-title">${s.name}</div>
+        <div class="occupancy">Location: ${s.location||"-"} • Capacity: ${s.capacity}</div>
+      `;
+      out.appendChild(el);
+    });
+  };
+
+  window.UI={showPage,populateShelfDropdown:window.populateShelfDropdown,renderAllShelves:window.renderAllShelves};
+});
+</script>
+
+</body>
 </html>

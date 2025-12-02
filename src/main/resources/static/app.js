@@ -13,16 +13,88 @@ document.addEventListener('DOMContentLoaded', () => {
   elements.modalBody = document.getElementById('modalBody');
   elements.modalClose = document.getElementById('modalCloseBtn');
 
+  // new UI controls
+  elements.shelfFilterSelect = document.getElementById('shelfFilterSelect');
+  elements.applyShelfFilterBtn = document.getElementById('applyShelfFilterBtn');
+  elements.viewAllShelvesBtn = document.getElementById('viewAllShelvesBtn');
+  elements.refreshAllBtn = document.getElementById('refreshAllBtn');
+  elements.backFromAllBtn = document.getElementById('backFromAllBtn');
+
   elements.shelfForm.addEventListener('submit', onSaveShelf);
   document.getElementById('resetShelfBtn').addEventListener('click', resetShelfForm);
   elements.bookForm.addEventListener('submit', onSaveBook);
   document.getElementById('resetBookBtn').addEventListener('click', resetBookForm);
-  elements.searchBtn.addEventListener('click', onSearch);
-  elements.refreshBtn.addEventListener('click', loadAll);
+  if (elements.searchBtn) elements.searchBtn.addEventListener('click', onSearch);
+  if (elements.refreshBtn) elements.refreshBtn.addEventListener('click', loadAll);
   if (elements.modalClose) elements.modalClose.addEventListener('click', closeModal);
   // allow closing modal with Escape key for better UX
   document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeModal(); });
 
+  // wire new UI controls (if present)
+  if (elements.applyShelfFilterBtn) {
+    elements.applyShelfFilterBtn.addEventListener('click', () => {
+      // if the UI dispatches a custom event this will also be handled (see below)
+      const v = elements.shelfFilterSelect?.value || '';
+      window.dispatchEvent(new CustomEvent('ui:shelfSelected', { detail: { shelfId: v } }));
+    });
+  }
+  if (elements.viewAllShelvesBtn) {
+    elements.viewAllShelvesBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      // if UI helper exists, use it to navigate
+      if (window.UI && typeof window.UI.showPage === 'function') {
+        window.UI.showPage('page-all-shelves');
+      } else {
+        // fallback: navigate to shelves page
+        document.getElementById('navAllShelves')?.click();
+      }
+    });
+  }
+  if (elements.refreshAllBtn) {
+    elements.refreshAllBtn.addEventListener('click', () => window.dispatchEvent(new CustomEvent('ui:refreshAll')));
+  }
+  if (elements.backFromAllBtn) {
+    elements.backFromAllBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (window.UI && typeof window.UI.showPage === 'function') window.UI.showPage('page-manage');
+      else document.getElementById('navManage')?.click();
+    });
+  }
+
+  // listen for UI-dispatched shelf selection (Apply / quick jump)
+  window.addEventListener('ui:shelfSelected', (ev) => {
+    try {
+      const shelfId = ev?.detail?.shelfId;
+      if (shelfId) {
+        // open shelf details using existing function
+        openShelfBooks(shelfId);
+      } else {
+        // if empty selection, just reload all
+        loadAll();
+      }
+    } catch (err) {
+      console.error('ui:shelfSelected handler failed', err);
+    }
+  });
+
+  // optional: listen for generic UI refresh events dispatched by the UI
+  window.addEventListener('ui:refresh', () => loadAll());
+  window.addEventListener('ui:refreshAll', () => loadAll());
+
+  // export CSV event (UI may dispatch)
+  window.addEventListener('ui:exportShelvesCsv', async () => {
+    try {
+      const shelves = await fetchJson(`${API}/shelves`);
+      const rows = shelves.map(s => ({ id: s.id, name: s.name, location: s.location || '', capacity: s.capacity || '' }));
+      const csv = toCsv(rows);
+      downloadBlob(csv, 'shelves.csv', 'text/csv');
+    } catch (err) {
+      alert('Export failed: ' + (err.message || err));
+      console.error(err);
+    }
+  });
+
+  // initial load
   loadAll();
 });
 
@@ -31,6 +103,20 @@ async function loadAll(){
     const shelves = await fetchJson(`${API}/shelves`);
     refreshShelfSelect(shelves);
     renderShelves(shelves);
+
+    // call UI helpers if available (non-destructive)
+    try {
+      if (window.populateShelfDropdown && typeof window.populateShelfDropdown === 'function') {
+        window.populateShelfDropdown(shelves);
+      }
+      if (window.renderAllShelves && typeof window.renderAllShelves === 'function') {
+        window.renderAllShelves(shelves);
+      }
+    } catch(uiErr){
+      // non-fatal: log but don't break app
+      console.warn('UI helper call failed', uiErr);
+    }
+
   } catch(err){
     alert('Failed to load data: ' + err.message);
     console.error(err);
@@ -47,12 +133,25 @@ async function fetchJson(url, opts){
 }
 
 function refreshShelfSelect(shelves){
-  elements.bookShelf.innerHTML = '<option value="">-- No shelf --</option>';
-  shelves.forEach(s => {
-    const opt = document.createElement('option');
-    opt.value = s.id; opt.text = `${s.name} (${s.location || 'no loc'})`;
-    elements.bookShelf.appendChild(opt);
-  });
+  // keep original bookShelf behavior
+  if (elements.bookShelf) {
+    elements.bookShelf.innerHTML = '<option value="">-- No shelf --</option>';
+    shelves.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id; opt.text = `${s.name} (${s.location || 'no loc'})`;
+      elements.bookShelf.appendChild(opt);
+    });
+  }
+  // also populate quick-jump select if present
+  if (elements.shelfFilterSelect) {
+    elements.shelfFilterSelect.innerHTML = '<option value="">— Select shelf —</option>';
+    shelves.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.id;
+      o.text = s.name + (s.location ? ' — ' + s.location : '');
+      elements.shelfFilterSelect.appendChild(o);
+    });
+  }
 }
 
 function renderShelves(shelves){
@@ -284,4 +383,26 @@ async function onSearch(){
 function escapeHtml(str){
   if (!str) return '';
   return String(str).replace(/[&<>\"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+}
+
+/* small helpers added (non-destructive) */
+function toCsv(rows){
+  if (!rows || !rows.length) return '';
+  const keys = Object.keys(rows[0]);
+  const lines = [keys.join(',')];
+  rows.forEach(r => {
+    const vals = keys.map(k => {
+      const v = r[k] === undefined || r[k] === null ? '' : String(r[k]).replace(/"/g, '""');
+      return `"${v}"`;
+    });
+    lines.push(vals.join(','));
+  });
+  return lines.join('\n');
+}
+function downloadBlob(content, filename, type){
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 3000);
 }
