@@ -12,14 +12,14 @@
 *{box-sizing:border-box}
 .html,body{height:100%; margin:0; color:#111}
 /* Constrain page width and center the app */
-body{overflow:hidden}
-/* center the app content and limit width so layout doesn't stretch vertically */
-.app-root, .app-main, .container, .page-wrapper { max-width:1200px; margin-left:auto; margin-right:auto }
+.app-root, .app-main, .container, .page-wrapper { max-width:1200px; margin-left:auto; margin-right:auto; padding-left:12px; padding-right:12px }
+.app-root{width:100%}
+body{overflow:auto; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale}
 .app-root{width:100%}
 .app-main{box-sizing:border-box}
 
 /* Make main area fit available viewport height and use internal scrolling when needed */
-.app-main{height:calc(100vh - 120px); overflow:auto}
+.app-main{min-height:calc(100vh - 120px); overflow:auto}
 
 /* compact panels and cards to reduce vertical length */
 .panel{padding:10px}
@@ -28,7 +28,7 @@ body{overflow:hidden}
 h1{margin:0;font-size:22px}
 .subtitle{margin:6px 0 0;color:var(--muted)}
 
-.container{display:grid; grid-template-columns: 320px 320px 1fr; gap:16px; padding:16px}
+.container{display:grid; grid-template-columns: 1fr; gap:16px; padding:8px}
 .panel{background:rgba(255,255,255,0.95); padding:14px; border-radius:var(--radius); box-shadow:0 6px 14px rgba(20,20,40,0.06)}
 .panel.wide{grid-column:3 / span 1}
 
@@ -39,7 +39,7 @@ button{padding:8px 12px; border-radius:8px; border:0; background:var(--accent); 
 button.muted{background:#eef2ff; color:#334155; border:1px solid #e6e9ef}
 button.danger{background:var(--danger)}
 
-.grid{display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:12px; margin-top:12px}
+.grid{display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:12px; margin-top:12px}
 .card{padding:12px; border-radius:8px; background:#fff; border:1px solid #eef2f6}
 .card h3{margin:0 0 6px; font-size:16px}
 .meta{font-size:13px; color:var(--muted); margin-bottom:8px}
@@ -50,18 +50,17 @@ button.danger{background:var(--danger)}
 /* App-specific: study themed layout and animations */
 .app-body{min-height:100vh; background-image: url('https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1900&q=80'); background-size:cover; background-position:center; background-attachment:fixed}
 .app-body::before{ content: ''; position: fixed; inset: 0; background: rgba(6,11,23,0.28); pointer-events: none }
-.app-header{display:flex; justify-content:center; align-items:center; padding:18px 28px; text-align:center}
+.app-header{display:flex; align-items:center; padding:14px 12px; gap:12px}
 .brand{display:flex; gap:12px; align-items:center}
-.logo{font-size:44px; line-height:1;}
-.app-header{display:flex; justify-content:center; align-items:center; padding:18px 20px 12px; text-align:center}
-.app-header h1{margin:0;font-size:32px; color:#0b1220; font-weight:800; letter-spacing:0.2px; text-shadow:none; background:#ffffff; padding:8px 16px; border-radius:10px; display:inline-block; box-shadow:0 6px 18px rgba(2,6,23,0.06)}
-.app-header .subtitle{font-size:14px;color:#0b1220; margin-top:10px}
+.logo{font-size:34px; line-height:1;}
+.app-header h1{margin:0;font-size:20px; color:#0b1220; font-weight:800; letter-spacing:0.2px; text-shadow:none; background:#ffffff; padding:6px 10px; border-radius:8px; display:inline-block; box-shadow:0 6px 18px rgba(2,6,23,0.06)}
+.app-header .subtitle{font-size:13px;color:#0b1220; margin-top:6px}
 .topnav{display:flex; gap:8px}
 .nav-btn{padding:8px 12px; border-radius:8px; text-decoration:none; color:#0f172a; background:#e6eefc}
 .nav-btn.muted{background:transparent;color:#475569;border:1px solid rgba(15,23,42,0.06)}
 
-.app-main{display:grid; grid-template-columns:300px 1fr; gap:20px; padding:20px}
-.sidebar .card-compact{padding:14px; border-radius:10px; background:linear-gradient(180deg,#ffffff, #fbfdff); box-shadow:0 8px 20px rgba(16,24,40,0.04)}
+.app-main{display:grid; grid-template-columns:1fr; gap:16px; padding:12px}
+.sidebar .card-compact{padding:12px; border-radius:10px; background:linear-gradient(180deg,#ffffff, #fbfdff); box-shadow:0 8px 20px rgba(16,24,40,0.04)}
 .mini-form input, .mini-form select{width:100%;padding:8px;margin-top:8px;border-radius:8px;border:1px solid #e6e9ef}
 .mini-form .btn{padding:8px 10px;border-radius:8px;background:var(--accent);color:white;border:0}
 .btn.ghost{background:transparent;border:1px solid #dbeafe;color:#0f172a}
@@ -79,7 +78,34 @@ button.danger{background:var(--danger)}
 .app-footer{padding:12px 20px; text-align:center}
 
 /* responsive */
-@media(max-width:900px){ .app-main{grid-template-columns:1fr} .sidebar{order:2} .content{order:1} }
+@media (min-width: 901px) {
+  /* Desktop: show sidebar + content */
+  .app-main{grid-template-columns:300px 1fr}
+  .app-header h1{font-size:28px}
+}
+
+@media (max-width: 900px) {
+  .app-main{grid-template-columns:1fr}
+  .sidebar{order:2}
+  .content{order:1}
+  .grid{grid-template-columns: repeat(auto-fill, minmax(160px, 1fr))}
+  .brand { align-items:flex-start }
+  .logo{font-size:30px}
+  .app-header h1{font-size:18px}
+  .toolbar{flex-direction:column; gap:8px}
+  .toolbar > div{width:100%; display:flex; gap:8px}
+  .mini-form input, .mini-form select, #searchInput{font-size:16px; padding:10px}
+  .actions, .btn, button{width:100%; display:block}
+  .actions{flex-direction:column}
+}
+
+@media (max-width: 480px) {
+  .grid{grid-template-columns: 1fr}
+  .card h3{font-size:16px}
+  .app-header{padding:12px}
+  .modal-content{width:96%; height:92vh; overflow:auto}
+  .modal-close{right:6px; top:6px}
+}
 
 /* Hero background for app page */
 .page-hero{display:none}
