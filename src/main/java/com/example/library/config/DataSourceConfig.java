@@ -20,12 +20,34 @@ public class DataSourceConfig {
     @Bean
     @Primary
     public DataSource dataSource(Environment env) {
+        // Support platform-provided datasource URL (Railway plugin provides SPRING_DATASOURCE_URL)
+        String springUrl = env.getProperty("SPRING_DATASOURCE_URL");
+        String springUser = env.getProperty("SPRING_DATASOURCE_USERNAME");
+        String springPass = env.getProperty("SPRING_DATASOURCE_PASSWORD");
+
         String host = env.getProperty("MYSQL_HOST", "localhost");
         String port = env.getProperty("MYSQL_PORT", "3306");
         String db = env.getProperty("MYSQL_DB", "libraryshelf");
         String user = env.getProperty("MYSQL_USER", "root");
         String pass = env.getProperty("MYSQL_PASSWORD", "");
-        
+        String activeProfile = env.getProperty("SPRING_PROFILES_ACTIVE", "");
+
+        // If platform provided SPRING_DATASOURCE_URL, prefer that and override user/pass if provided
+        boolean usingSpringDatasourceUrl = springUrl != null && !springUrl.isBlank();
+        if (usingSpringDatasourceUrl) {
+            if (springUser != null && !springUser.isBlank()) user = springUser;
+            if (springPass != null && !springPass.isBlank()) pass = springPass;
+        }
+
+        // Safety check: when the mysql profile is active and SPRING_DATASOURCE_URL isn't provided,
+        // ensure the host isn't left at the default `localhost` (common mistake when env vars are not configured).
+        if (!usingSpringDatasourceUrl && "mysql".equalsIgnoreCase(activeProfile) && (host == null || "localhost".equals(host) || "127.0.0.1".equals(host))) {
+            String hint = "MYSQL_HOST is not configured (using default 'localhost'). " +
+                "Set the environment variables MYSQL_HOST, MYSQL_PORT, MYSQL_DB, MYSQL_USER, and MYSQL_PASSWORD in your Railway/Render/service dashboard to point to your PlanetScale/TiDB instance, or provide SPRING_DATASOURCE_URL.";
+            System.err.println("Configuration error: " + hint);
+            throw new IllegalStateException(hint);
+        }
+
         boolean isPlanetScale = host.contains("tidbcloud.com") || host.contains("planetscale.com");
 
         // For PlanetScale/TiDB (cloud) require SSL and use recommended JDBC params
@@ -36,7 +58,7 @@ public class DataSourceConfig {
 
         try {
             // Try to create database for local MySQL only (skip for cloud-hosted databases)
-            if (!isPlanetScale) {
+            if (!isPlanetScale && !usingSpringDatasourceUrl) {
                 String jdbcNoDb = String.format("jdbc:mysql://%s:%s/%s", host, port, "");
                 if (!jdbcNoDb.endsWith("/")) jdbcNoDb = jdbcNoDb + "/";
                 jdbcNoDb += params;
@@ -51,7 +73,17 @@ public class DataSourceConfig {
                 }
             }
 
-            String jdbc = String.format("jdbc:mysql://%s:%s/%s%s", host, port, db, params);
+            String jdbc;
+            if (usingSpringDatasourceUrl) {
+                jdbc = springUrl;
+            } else {
+                jdbc = String.format("jdbc:mysql://%s:%s/%s%s", host, port, db, params);
+            }
+
+            // Log the JDBC URL without credentials so platform logs show which host/DB we're attempting
+            try {
+                System.out.println("Initializing MySQL DataSource, jdbcUrl=" + (usingSpringDatasourceUrl ? springUrl : jdbc));
+            } catch (Exception ignored) {}
 
             HikariConfig cfg = new HikariConfig();
             cfg.setJdbcUrl(jdbc);
